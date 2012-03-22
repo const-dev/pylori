@@ -1,0 +1,123 @@
+#!/usr/bin/env python
+
+import optparse
+import argparse
+import os
+import re
+import subprocess
+import sys
+import time
+import urllib2
+
+# make sure mplayer is in the path
+
+def main():
+    parser = argparse.ArgumentParser(
+            description='Download lectures from videolectures.net')
+    parser.add_argument('url', help='http://videolectures.net/XXX/[video/NNN/]')
+    parser.add_argument('-r', dest='max_retries', default=1,
+            help='maximum number of automatic retries')
+    parser.add_argument('-v', '--skip_video', action='store_true',
+            dest='skip_video', default=False,
+            help='download only slides, but no video')
+    args = parser.parse_args()
+
+    url = args.url
+
+    #print 'Downloading %s' % url
+    html = urllib2.urlopen(url).read()
+
+    match = re.search(r'"(mms://.*?)"', html)
+    if match:
+        mms = match.group(1)
+    else:
+        raise Exception("Parsing error: failed to find mms")
+
+    print 'Media URL: %s' % mms
+
+    m = re.search(r'<meta name="title" content="(.*?)" />', html)
+    title = m.group(1).rstrip()
+
+    m = re.search(r'http://videolectures.net/([^/]*)', url)
+    video_name = m.group(1)
+
+    m = re.search(r'http://videolectures.net/(.*?)/video/(.*)', url.rstrip('/'))
+    if m:
+        section = m.group(2)
+        video_name += '_' + section
+        title += '-' + section
+
+    #print 'Filename: %s' % video_name
+    
+    print title
+
+    if not os.path.isdir(title):
+        os.mkdir(title, 0755)
+    else:
+        print "directory `%s' exists." % title
+
+    m = re.search(r'Download slides:\s*<a href="(.*?)"', html)
+    if m:
+        s_url = m.group(1)
+        s_name = s_url.split('/')[-1]
+        if s_url.startswith('/'):
+            s_url = 'http://videolectures.net' + s_url
+        s_content = urllib2.urlopen(s_url)
+        s_file = open('%s/%s' % (title, s_name), 'wb')
+        s_file.write(s_content.read())
+        s_file.close()
+
+    slides = {}
+    for m in re.findall(r'idx: (\d+), src: "(.*?)"', html):
+        img_url = m[1]
+        img_idx = int(m[0])
+        img_ext = img_url.split('.')[-1]
+        img = urllib2.urlopen(img_url)
+        img_name = '%03d.%s' % (img_idx, img_ext)
+        img_file = open('%s/%s' % (title, img_name), 'wb')
+        img_file.write(img.read())
+        img_file.close()
+
+        slides[m[0]] = img_name
+    
+    slides_time = {}
+    for m in re.findall('sync=sync.next={time: (\d+).*idx: (\d+)', html):
+        slides_time[int(m[0])] = slides[m[1]]
+
+    f = open(title + '/sync', 'w')
+    f.write('%s\n' % video_name)
+    for t in sorted(slides_time.keys()):
+        f.write('%s %s\n' % (t, slides_time[t]))
+    f.close()
+
+    f = open(title + '/url', 'w')
+    f.write('%s\n' % url)
+    f.close()
+
+    if args.skip_video:
+        sys.exit(0)
+
+    retry_num = 0
+    prev_size = None
+
+    while True:
+        video_file = '%s/%s' % (title, video_name)
+        argv = ['mplayer', '-dumpstream', mms, '-dumpfile', video_file]
+        ret = subprocess.call(argv)
+
+        if ret == 0:
+            print 'Successful download'
+            sys.exit(0)
+
+        print 'Download failed, mplayer return code: %d' % ret
+
+        retry_num += 1
+        if retry_num >= args.max_retries:
+            if args.max_retries > 1:
+                print 'Retry limit exceeded, aborting.'
+            sys.exit(1)
+
+        time.sleep(3)
+
+if __name__ == '__main__':
+    main()
