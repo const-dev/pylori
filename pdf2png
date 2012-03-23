@@ -5,7 +5,6 @@ import subprocess
 import sys
 import os
 import shutil
-import shlex
 import tempfile
 import glob
 import re

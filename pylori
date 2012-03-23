@@ -3,8 +3,6 @@
 from __future__ import division
 import wx
 from wx.lib.pubsub import Publisher as pub
-import math
-import random
 import sys
 import os
 import threading
@@ -31,29 +29,29 @@ class SlidesWindow(wx.Window):
 
 
     def OnSize(self, evt):
-        self.Resize(evt.GetSize())
+        self.resize(evt.GetSize())
 
 
     def OnPaint(self, evt):
         dc = wx.BufferedPaintDC(self, self.buffer)
 
 
-    def InitBuffer(self):
+    def init_buffer(self):
         w, h = self.GetClientSize()        
 
         self.buffer = wx.EmptyBitmap(w, h)
         dc = wx.BufferedDC(wx.ClientDC(self), self.buffer)
-        self.DrawGraph(dc)
+        self.show_slide(dc)
         
 
-    def SetData(self, img_file):
+    def set_slide(self, img_file):
         self.img = wx.Image(img_file, wx.BITMAP_TYPE_ANY)
 
         dc = wx.BufferedDC(wx.ClientDC(self), self.buffer)
-        self.DrawGraph(dc)
+        self.show_slide(dc)
 
 
-    def Resize(self, win_size):
+    def resize(self, win_size):
         win_w, win_h = win_size
 
         if win_w > win_h * self.ratio:
@@ -62,10 +60,10 @@ class SlidesWindow(wx.Window):
             win_w = win_h * self.ratio
 
         self.parent.SetSize(wx.Size(win_w, win_h))
-        self.InitBuffer()
+        self.init_buffer()
 
     
-    def DrawGraph(self, dc):
+    def show_slide(self, dc):
         dw, dh = dc.GetSize()
 
         iw, ih = self.img.GetWidth(), self.img.GetHeight()
@@ -77,7 +75,7 @@ class SlidesWindow(wx.Window):
         dc.DrawBitmap(wx.BitmapFromImage(scaled_img), 0, 0)
 
 
-    def InitGeometry(self, img_file):
+    def init_geometry(self, img_file):
         disp_w, disp_h = wx.GetDisplaySize()
 
         img = wx.Image(img_file, wx.BITMAP_TYPE_ANY)
@@ -96,7 +94,7 @@ class SlidesWindow(wx.Window):
 
         self.ratio = img_w / img_h
         self.img = img
-        self.Resize((img_w, img_h))
+        self.resize((img_w, img_h))
         
         self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
@@ -131,20 +129,20 @@ class SlidesFrame(wx.Frame):
             self.Connect(-1, -1, UPDATE_ID, self.change_slides)
             self.Connect(-1, -1, INIT_GEO_ID, self.init_slides)
         else:
-            pub.subscribe(self.change_slides, "change_slides")
-            pub.subscribe(self.init_slides, "init_slides")
+            pub.subscribe(self.change_slides, 'change_slides')
+            pub.subscribe(self.init_slides, 'init_slides')
 
     def init_slides(self, msg):
-        self.plot.InitGeometry(msg.data)
+        self.plot.init_geometry(msg.data)
 
     def change_slides(self, msg):
-        self.plot.SetData(msg.data)
+        self.plot.set_slide(msg.data)
 
 
 def load_lecture():
     slides = []
 
-    f = open(slides_dir + '/sync', 'r')
+    f = open(slides_sync_file, 'r')
 
     video = f.readline().rstrip()
 
@@ -191,20 +189,13 @@ class SyncSlides(threading.Thread):
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, 
                 universal_newlines=True)
 
-        def show_slide(slide, init=False):
-            img_file = slides_dir + '/' + slide
-            if MSG_PASS_BY_EVENT:
-                wx.PostEvent(self.slides_viewer, UpdateEvent(img_file))
-            else:
-                pub.sendMessage("change_slides", img_file)
-
         prev_slide = slides_sync[0][1]
         img_file = slides_dir + '/' + prev_slide
 
         if MSG_PASS_BY_EVENT:
             wx.PostEvent(self.slides_viewer, InitGeoEvent(img_file))
         else:
-            pub.sendMessage("init_slides", img_file)
+            pub.sendMessage('init_slides', img_file)
 
         while True:
             line = p.stdout.readline()
@@ -220,7 +211,13 @@ class SyncSlides(threading.Thread):
                 slide = cur_slide(msec, slides_sync)
 
                 if slide != prev_slide:
-                    show_slide(slide)
+                    img_file = slides_dir + '/' + slide
+
+                    if MSG_PASS_BY_EVENT:
+                        wx.PostEvent(self.slides_viewer, UpdateEvent(img_file))
+                    else:
+                        pub.sendMessage('change_slides', img_file)
+
                     prev_slide = slide
 
 
@@ -229,9 +226,15 @@ if __name__ == '__main__':
         print 'usage: %s lecture_directory' % sys.argv[0]
         sys.exit(0)
 
-    slides_dir = sys.argv[1]   # global variable
+    slides_dir = sys.argv[1].rstrip('/')
+
     if not os.path.exists(slides_dir):
         print '%s: No such directory' % slides_dir
+        sys.exit(1)
+
+    slides_sync_file = slides_dir + '/sync.txt'
+    if not os.path.exists(slides_sync_file):
+        print 'No video information sync.txt in %s' % slides_dir
         sys.exit(1)
 
     app = wx.App()

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import optparse
 import argparse
 import os
 import re
@@ -84,13 +83,13 @@ def main():
     for m in re.findall('sync=sync.next={time: (\d+).*idx: (\d+)', html):
         slides_time[int(m[0])] = slides[m[1]]
 
-    f = open(title + '/sync', 'w')
+    f = open(title + '/sync.txt', 'w')
     f.write('%s\n' % video_name)
     for t in sorted(slides_time.keys()):
         f.write('%s %s\n' % (t, slides_time[t]))
     f.close()
 
-    f = open(title + '/url', 'w')
+    f = open(title + '/url.txt', 'w')
     f.write('%s\n' % url)
     f.close()
 
@@ -106,7 +105,7 @@ def main():
         ret = subprocess.call(argv)
 
         if ret == 0:
-            print 'Successful download'
+            print 'Video downloaded successfully'
             sys.exit(0)
 
         print 'Download failed, mplayer return code: %d' % ret
