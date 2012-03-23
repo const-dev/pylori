@@ -118,7 +118,7 @@ def copy_img(tmp_dir, lec_dir, pages, n_pages):
         idx += 1
 
 
-if __name__ == '__main__':
+def pdf2png():
     parser = argparse.ArgumentParser(
             description='Generate PNG images from a PDF.')
 
@@ -197,3 +197,6 @@ if __name__ == '__main__':
 
     shutil.rmtree(tmp_dir)
 
+
+if __name__ == '__main__':
+    pdf2png()

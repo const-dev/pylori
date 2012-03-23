@@ -4,12 +4,12 @@ PYLORI: PYthon videoLecture Offline RevIew
 Pylori comes with a set of command-line tools to enjoy 
 [videolectures.net](http://videolectures.net) when disconnected: 
 
-* `pylori_dl` - Lecture downloader that downloads video and slides from 
+* **pylori_dl** - Lecture downloader that downloads video and slides from 
 videolectures.net.
-* `pylori` - Lecture player that plays the video and slides downloaded by 
-`pylori_dl`.
-* `pdf2png` - A tool to convert PDF slides downloaded by `pylori_dl` to 
-high resolution images for `pylori`.
+* **pylori** - Lecture player that plays the video and slides downloaded by 
+pylori\_dl.
+* **pdf2png** - A tool to convert PDF slides downloaded by pylori\_dl to 
+high resolution images for pylori.
 
 
 Installation
@@ -22,7 +22,7 @@ Pylori requires
 [ImageMagick](http://www.imagemagick.org/).
 
 On Mac OS X, you could install the above packages through
-[MacPorts](http://www.macports.org/) by:
+[MacPorts](http://www.macports.org/):
 
     $ sudo port install python27 py27-wxpython-devel mplayer-devel ImageMagick
 
@@ -37,12 +37,17 @@ Usage
 
     pylori_dl [-v] http://videolectures.net/XXX/[video/NNN/]
 
-If the option `-v` or `--skip_video` is specified, pylori\_dl will 
-download only slides and skip the video.
+pylori\_dl downloads video and all the slides of a lecture specified by the 
+given URL, and put them in a directory named after the title of the lecture.
+If `-v` or `--skip_video` is specified, pylori\_dl will download only 
+slides and skip the video.
 
     pylori DIRECTORY
 
-`DIRECTORY` is the directory created by pylori\_dl.
+pylori plays the video lecture and shows slides syncing with the video 
+on a separate window.
+`DIRECTORY` is the directory created by pylori\_dl that contains
+lecture materials.
 
     pdf2png [-d DENSITY] [-m] DIRECTORY [PAGES [PAGES ...]]
 
@@ -53,8 +58,8 @@ The generated images are put into `DIRECTORY`.
 The option `PAGES` specifies page numbers of PDF to be used for the video
 in the *exact* order.
 `PAGES` could be a single page number or a range of page numbers 
-in the format `a-b` without spaces in between. 
-For example, `1-3` and `3-1` are equivalent to `1 2 3` and `3 2 1` respectively.
+in the format `a-b` without spaces in between.  For example, 
+`1-3` and `3-1` are equivalent to `1 2 3` and `3 2 1` respectively.
 If `PAGES` is omitted, all pages of PDF are generated.
 
 `DENSITY` is the density of images to generate.
@@ -81,14 +86,14 @@ of the lecture will be created, in this case,
 
     $ pylori Why\ Bayesian\ nonparametrics\?/
 
-Usually a PDF version of the slides will also be available, which
-will be downloaded by pylori\_dl and placed in the created directory.
-If you are not satisfy with the quality of the original slides,
-you can use pdf2png to generate a higher resolution copy from PDF slides.
+When a PDF version of the slides is available, pylori\_dl will download 
+and place it in the created directory as well.
+If you are not satisfy with the quality of the original slides snapshots,
+you can use pdf2png to generate a higher resolution copy from PDF slides:
 
     $ pdf2png Why\ Bayesian\ nonparametrics\?/
 
-Pylori can also be used for lectures with multiple sections such as [this one]
+pylori can also be used for lectures with multiple sections such as [this one]
 (http://videolectures.net/mlss07_rasmussen_bigp/).
 In this example, if you want to download, say the fourth part, you can specify
 the URL like the following format:
@@ -98,19 +103,18 @@ the URL like the following format:
 In the multi-part cases, a single section might just involve part of the 
 pages in PDF slides. To generate the slide images for that particular
 section, you can specify the corresponding page numbers (or ranges) manually. 
-In the same example, it is:
+For the same example, it is:
 
     $ pdf2png -d 300 Bayesian\ inference\ and\ Gaussian\ processes-4/ 38-43 42-44 42 41 44 41 44 43
 
 Without using `-d 300` the generated images will be
-not much better than the original ones, so a larger density such as 300
-should be specified explicitly.
+not much better than the original ones, so a larger density should be 
+specified explicitly.
 
-But who wants to specify pages in such tedious way? pdf2png provides an
-auto matching option `-m` to take care of everything:
+pdf2png also provides an auto matching option `-m` to take care of everything:
 
     $ pdf2png -m -d 300 Bayesian\ inference\ and\ Gaussian\ processes-4/
 
 When `-m` is used, pdf2png will output the matched page numbers so you can
-use them in the future to save matching time.
+use them in the future to save time.
 
