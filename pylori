@@ -11,6 +11,7 @@ import re
 
 # TODO: 
 #  * redirect keyboard event on wx to mplayer (popen)
+#  * more error handling (eg: invalid sync.txt format)
 #
 # FIXME: figure out how to handle close event
 #
@@ -224,7 +225,7 @@ class SyncSlides(threading.Thread):
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         print 'usage: %s lecture_directory' % sys.argv[0]
-        sys.exit(0)
+        sys.exit(1)
 
     slides_dir = sys.argv[1].rstrip('/')
 

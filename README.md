@@ -26,8 +26,8 @@ On Mac OS X, you could install the above packages through
 
     $ sudo port install python27 py27-wxpython-devel mplayer-devel ImageMagick
 
-On Linux, you could install required packages with the 
-package management tool on your system. For example, on Ubuntu:
+On Linux, you could install required packages with package management 
+tools on your system. For example, on Ubuntu:
     
     $ sudo apt-get install python python-wxgtk2.8 mplayer imagemagick
 
@@ -37,24 +37,33 @@ Usage
 
     pylori_dl [-v] http://videolectures.net/XXX/[video/NNN/]
 
-If the option `-v` or `--skip_video` is specified, pylori_dl will 
+If the option `-v` or `--skip_video` is specified, pylori\_dl will 
 download only slides and skip the video.
 
     pylori DIRECTORY
 
-`DIRECTORY` is the directory created by pylori_dl.
+`DIRECTORY` is the directory created by pylori\_dl.
 
-    pdf2png [-d DENSITY] PDF [PAGES [PAGES ...]]
+    pdf2png [-d DENSITY] [-m] DIRECTORY [PAGES [PAGES ...]]
 
-pdf2png will generate PNG images in the current directory from the 
-specified PDF slides.
-`PDF` is the pdf slides downloaded by pylori_dl.
-`PAGES` could be a single page number or a range to page numbers 
-in the format of `a-b` without spaces in between. 
-For example, `PAGES` could be `1-3` or `3-1` which are equivalent
-to `1 2 3` and `3 2 1` respectively. If `PAGES` is omitted, all pages
-of PDF slides are generated.
+pdf2png will find PDF slides in `DIRECTORY`, the directory created by 
+pylori\_dl, and convert it to high resolution PNG images.
+The generated images are put into `DIRECTORY`.
+
+The option `PAGES` specifies page numbers of PDF to be used for the video
+in the *exact* order.
+`PAGES` could be a single page number or a range of page numbers 
+in the format `a-b` without spaces in between. 
+For example, `1-3` and `3-1` are equivalent to `1 2 3` and `3 2 1` respectively.
+If `PAGES` is omitted, all pages of PDF are generated.
+
 `DENSITY` is the density of images to generate.
+
+When `-m` or `--match` is specified, original low resolution images are
+automatically matched with PDF pages. `PAGES` are ignored when this option
+is used.
+
+pdf2png will also make pylori to display new images afterward.
 
 
 Examples
@@ -66,43 +75,42 @@ you can run the following to download the materials of that lecture:
 
     $ pylori_dl http://videolectures.net/nipsworkshops2011_ghahramani_nonparametrics/
 
-When pylori_dl is done, a directory named after the title
+When pylori\_dl is done, a directory named after the title
 of the lecture will be created, in this case, 
 "Why Bayesian nonparametrics?". You can then watch the lecture by:
 
     $ pylori Why\ Bayesian\ nonparametrics\?/
 
 Usually a PDF version of the slides will also be available, which
-will be downloaded by pylori_dl and placed in the created directory.
-If you are not satisfy with the image quality of the original slides,
-you can use pdf2png to generate a copy with higher resolution from
-PDF slides.
+will be downloaded by pylori\_dl and placed in the created directory.
+If you are not satisfy with the quality of the original slides,
+you can use pdf2png to generate a higher resolution copy from PDF slides.
 
-    $ cd Why\ Bayesian\ nonparametrics\?/
-    $ pdf2png nipsworkshops2011_ghahramani_nonparametrics_01.pdf
+    $ pdf2png Why\ Bayesian\ nonparametrics\?/
 
-After the high resolution images are generated, you have to
-edit `sync.txt` in the directory to notify pylori to use these images 
-just by substituting the image names ended with `jpg`
-with `png` which could be done easily with any text editors.
-
-Pylori can also be used for lectures with multiple sections such as
-[this one]
+Pylori can also be used for lectures with multiple sections such as [this one]
 (http://videolectures.net/mlss07_rasmussen_bigp/).
 In this example, if you want to download, say the fourth part, you can specify
-the URL in the following format:
+the URL like the following format:
 
     $ pylori_dl http://videolectures.net/mlss07_rasmussen_bigp/video/4/
 
 In the multi-part cases, a single section might just involve part of the 
 pages in PDF slides. To generate the slide images for that particular
-section, you can specify the corresponding page numbers (or ranges). 
+section, you can specify the corresponding page numbers (or ranges) manually. 
 In the same example, it is:
 
-    $ cd Bayesian\ inference\ and\ Gaussian\ processes-4/
-    $ pdf2png -d 300 . 38-43 42-44 42 41 44 41 44 43
+    $ pdf2png -d 300 Bayesian\ inference\ and\ Gaussian\ processes-4/ 38-43 42-44 42 41 44 41 44 43
 
 Without using `-d 300` the generated images will be
 not much better than the original ones, so a larger density such as 300
-should be specified explicitly. 
+should be specified explicitly.
+
+But who wants to specify pages in such tedious way? pdf2png provides an
+auto matching option `-m` to take care of everything:
+
+    $ pdf2png -m -d 300 Bayesian\ inference\ and\ Gaussian\ processes-4/
+
+When `-m` is used, pdf2png will output the matched page numbers so you can
+use them in the future to save matching time.
 
