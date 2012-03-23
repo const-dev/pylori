@@ -52,9 +52,9 @@ specified PDF slides.
 `PAGES` could be a single page number or a range to page numbers 
 in the format of `a-b` without spaces in between. 
 For example, `PAGES` could be `1-3` or `3-1` which are equivalent
-to `1 2 3` and `3 2 1` respectively. If `PAGES` is omitted, all the pages
-of the PDF slides are generated.
-`DENSITY` is the density of the images to generate.
+to `1 2 3` and `3 2 1` respectively. If `PAGES` is omitted, all pages
+of PDF slides are generated.
+`DENSITY` is the density of images to generate.
 
 
 Examples
@@ -76,7 +76,7 @@ Usually a PDF version of the slides will also be available, which
 will be downloaded by pylori_dl and placed in the created directory.
 If you are not satisfy with the image quality of the original slides,
 you can use pdf2png to generate a copy with higher resolution from
-the PDF slides.
+PDF slides.
 
     $ cd Why\ Bayesian\ nonparametrics\?/
     $ pdf2png nipsworkshops2011_ghahramani_nonparametrics_01.pdf
@@ -95,7 +95,7 @@ the URL in the following format:
     $ pylori_dl http://videolectures.net/mlss07_rasmussen_bigp/video/4/
 
 In the multi-part cases, a single section might just involve part of the 
-pages in the PDF slides. To generate the slide images for that particular
+pages in PDF slides. To generate the slide images for that particular
 section, you can specify the corresponding page numbers (or ranges). 
 In the same example, it is:
 

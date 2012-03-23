@@ -5,25 +5,24 @@ import os
 import re
 import subprocess
 import sys
-import time
 import urllib2
 
 # make sure mplayer is in the path
 
-def main():
+def videolecture_download():
     parser = argparse.ArgumentParser(
             description='Download lectures from videolectures.net')
+
     parser.add_argument('url', help='http://videolectures.net/XXX/[video/NNN/]')
-    parser.add_argument('-r', dest='max_retries', default=1,
-            help='maximum number of automatic retries')
+
     parser.add_argument('-v', '--skip_video', action='store_true',
             dest='skip_video', default=False,
             help='download only slides, but no video')
+
     args = parser.parse_args()
 
     url = args.url
 
-    #print 'Downloading %s' % url
     html = urllib2.urlopen(url).read()
 
     match = re.search(r'"(mms://.*?)"', html)
@@ -32,7 +31,7 @@ def main():
     else:
         raise Exception("Parsing error: failed to find mms")
 
-    print 'Media URL: %s' % mms
+    #print 'Media URL: %s' % mms
 
     m = re.search(r'<meta name="title" content="(.*?)" />', html)
     title = m.group(1).rstrip()
@@ -48,21 +47,21 @@ def main():
 
     #print 'Filename: %s' % video_name
     
-    print title
-
     if not os.path.isdir(title):
         os.mkdir(title, 0755)
+        print 'Lecture directory created: "%s"' % title
     else:
-        print "directory `%s' exists." % title
+        print 'Lecture directory "%s" exists.' % title
 
     m = re.search(r'Download slides:\s*<a href="(.*?)"', html)
+    slide_name = '-'
     if m:
         s_url = m.group(1)
-        s_name = s_url.split('/')[-1]
+        slide_name = s_url.split('/')[-1]
         if s_url.startswith('/'):
             s_url = 'http://videolectures.net' + s_url
         s_content = urllib2.urlopen(s_url)
-        s_file = open('%s/%s' % (title, s_name), 'wb')
+        s_file = open('%s/%s' % (title, slide_name), 'wb')
         s_file.write(s_content.read())
         s_file.close()
 
@@ -89,34 +88,23 @@ def main():
         f.write('%s %s\n' % (t, slides_time[t]))
     f.close()
 
-    f = open(title + '/url.txt', 'w')
+    f = open(title + '/info.txt', 'w')
     f.write('%s\n' % url)
+    f.write('%s\n' % slide_name)
     f.close()
 
     if args.skip_video:
         sys.exit(0)
 
-    retry_num = 0
-    prev_size = None
+    video_file = '%s/%s' % (title, video_name)
+    argv = ['mplayer', '-dumpstream', mms, '-dumpfile', video_file]
+    ret = subprocess.call(argv)
 
-    while True:
-        video_file = '%s/%s' % (title, video_name)
-        argv = ['mplayer', '-dumpstream', mms, '-dumpfile', video_file]
-        ret = subprocess.call(argv)
+    if ret == 0:
+        print 'Video downloaded successfully'
+    else:
+        print 'Download failed. Mplayer return code: %d' % ret
 
-        if ret == 0:
-            print 'Video downloaded successfully'
-            sys.exit(0)
-
-        print 'Download failed, mplayer return code: %d' % ret
-
-        retry_num += 1
-        if retry_num >= args.max_retries:
-            if args.max_retries > 1:
-                print 'Retry limit exceeded, aborting.'
-            sys.exit(1)
-
-        time.sleep(3)
 
 if __name__ == '__main__':
-    main()
+    videolecture_download()

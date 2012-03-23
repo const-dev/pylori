@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import division
 import argparse
 import subprocess
 import sys
@@ -8,28 +9,158 @@ import shutil
 import tempfile
 import glob
 import re
+import fileinput
 
-#FIXME: store images of pdf in (a directory of) the current directory
+
+CMP_IMG_WIDTH = 200
+MSER_THRESHOLD = 10000
+MIN_IMG_WIDTH = 1000   # good for a 15-inch laptop
+
+re_img_size = re.compile(r'^\S+\s+\S+\s+(\d+)x(\d+)')
+re.img_dissimilar = re.compile('images too dissimilar')
+
+
+def pdf_n_pages(pdf):
+    args = ['identify', pdf]
+    p = subprocess.Popen(args, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, universal_newlines=True).communicate()
+
+    return p[0].count('\n')
+
+
+def img_get_size(img):
+    args = ['identify', img]
+    p = subprocess.Popen(args, stdout=subprocess.PIPE).communicate()
+    m = re_img_size.search(p[0])
+
+    return int(m.group(1)), int(m.group(2))
+
+
+def img_resize(img, w, img_out):
+    subprocess.call(['convert', img, '-resize', str(w), img_out])
+
+
+def img_compare(img1, img2):
+    args = ['compare', '-metric', 'RMSE', '-subimage-search', img1, img2,
+            'sim.png']
+    p = subprocess.Popen(args, stderr=subprocess.PIPE).communicate()
+
+    if re.img_dissimilar.search(p[1]):
+        return 1e12
+
+    return float(p[1].split(None, 1)[0])
+
+
+def match_img(tmp_dir, lec_dir, n_pages):
+    img_w, img_h = img_get_size('%s/s-0.png' % tmp_dir)
+
+    if img_w < MIN_IMG_WIDTH:
+        print 'Current density is considerred too low.',
+        print "Try to specify a higher density by '-d'."
+        return
+
+    for i in range(n_pages):
+        img_resize('%s/s-%d.png' % (tmp_dir, i), CMP_IMG_WIDTH, 
+                '%s/r-%d.png' % (tmp_dir, i))
+
+    match = []
+    first = True
+
+    for line in fileinput.input('%s/sync.txt' % lec_dir, inplace=1):
+        if first:
+            first = False   # skip the first line (video name)
+            sys.stdout.write(line)
+            continue
+
+        orig_name = line.split()[1]
+        orig_img = '%s/%s' % (lec_dir, orig_name)
+        cmp_name = '%s/cmp.png' % tmp_dir
+        img_resize(orig_img, CMP_IMG_WIDTH, cmp_name)
+
+        diffs = [img_compare(cmp_name, '%s/r-%d.png' % (tmp_dir, i)) 
+                for i in range(n_pages)]
+
+        min_diff = min(diffs)
+        
+        if min_diff > MSER_THRESHOLD:
+            sys.stderr.write('NOTE: %s might not match any page of the PDF.\n'\
+                             % orig_img)
+
+        match_idx = diffs.index(min_diff)
+        new_name = orig_name[:orig_name.rindex('.')] + '.png'
+
+        shutil.copy('%s/s-%d.png' % (tmp_dir, match_idx), 
+                    '%s/%s' % (lec_dir, new_name))
+
+        match.append(str(match_idx + 1))
+        sys.stderr.write('page %-3d -> %s\n' % (match_idx + 1, new_name))
+        print '%s %s' % (line.split()[0], new_name)
+
+    print ' '.join(match)
+
+
+def copy_img(tmp_dir, lec_dir, pages, n_pages):
+    if pages == []: # generate all pages
+        pages = range(n_pages)
+    else:
+        # convert to zero-based page numbers
+        pages = [p - 1 for p in pages]
+
+        for p in pages:
+            if not os.path.exists('%s/s-%d.png' % (tmp_dir, p)):
+                print '%d: invalid page' % p
+                return
+
+    idx = 0
+    for p in pages:
+        shutil.copy('%s/s-%d.png' % (tmp_dir, p), 
+                    '%s/%03d.png' % (lec_dir, idx))
+        idx += 1
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-            description='Generate PNG images in current directory from a PDF.')
+            description='Generate PNG images from a PDF.')
 
-    parser.add_argument('pdf', help='pdf file to convert')
+    parser.add_argument('dir', help='lecture directory')
+
     parser.add_argument('pages', nargs='*', 
             help='pages to generate (eg: 1, 1-3, 3-1)')
+
     parser.add_argument('-d', '--density', dest='density', type=int, 
             default=-1, help='density of the image to generate (eg: 300)')
 
+    parser.add_argument('-m', '--match', action='store_true',
+            dest='auto_match', default=False,
+            help='auto match PDF with slide images')
+
     args = parser.parse_args()
 
-    if not os.path.exists(args.pdf):
-        print '%s: No such pdf file' % args.pdf
+    lec_dir = args.dir.rstrip('/')
+
+    if not os.path.exists(lec_dir):
+        print '%s: No such directory' % lec_dir
         sys.exit(1)
+
+    f = open('%s/info.txt' % lec_dir, 'r')
+    url = f.readline()
+    pdf_name = f.readline().rstrip()
+
+    if pdf_name == '-':
+        print 'No pdf found.'
+        sys.exit(1)
+
+    pdf_file = '%s/%s' % (lec_dir, pdf_name)
+    if not os.path.exists(pdf_file):
+        print '%s: No such file' % pdf_file
+        sys.exit(1)
+
+    if args.auto_match and args.pages:
+        print 'Auto match is on. Specified pages are ignored.'
 
     pages = []
 
-    if args.pages:
+    if not args.auto_match and args.pages:
         re_range = re.compile(r'(\d+)-(\d+)')
         re_int = re.compile(r'(\d+)')
 
@@ -54,24 +185,15 @@ if __name__ == '__main__':
     if args.density > 0:
         convert_argv += ['-density', str(args.density)]
 
-    convert_argv += [args.pdf, '%s/s.png' % tmp_dir] # 's': an arbitrary prefix
+    convert_argv += [pdf_file, '%s/s.png' % tmp_dir] # 's': an arbitrary prefix
     subprocess.Popen(convert_argv, stderr=subprocess.PIPE).communicate()
-    
-    if pages == []: # generate all pages
-        pages = range(len(glob.glob(tmp_dir + '/*.png')))
+
+    n_pages = pdf_n_pages(pdf_file)
+
+    if args.auto_match:
+        match_img(tmp_dir, lec_dir, n_pages)
     else:
-        # convert to 0-basis page numbers
-        pages = [p - 1 for p in pages]
-
-        for p in pages:
-            if not os.path.exists('%s/s-%d.png' % (tmp_dir, p)):
-                print '%d: invalid page' % p
-                sys.exit(1)
-
-    idx = 0
-    for p in pages:
-        shutil.copy('%s/s-%d.png' % (tmp_dir, p), '%03d.png' % idx)
-        idx += 1
+        copy_img(tmp_dir, lec_dir, pages, n_pages)
 
     shutil.rmtree(tmp_dir)
 
