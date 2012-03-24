@@ -143,14 +143,12 @@ class SlidesFrame(wx.Frame):
 def load_lecture():
     slides = []
 
-    f = open(slides_sync_file, 'r')
+    with open(slides_sync_file, 'r') as f:
+        video = f.readline().rstrip()
 
-    video = f.readline().rstrip()
-
-    for line in f:
-        m = re.search(r'(\d+) (\S+)', line)
-        slides.append((int(m.group(1)), m.group(2)))
-    f.close()
+        for line in f:
+            m = re.search(r'(\d+) (\S+)', line)
+            slides.append((int(m.group(1)), m.group(2)))
 
     return video, slides
 

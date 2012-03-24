@@ -62,9 +62,9 @@ def videolecture_download():
         if s_url.startswith('/'):
             s_url = 'http://videolectures.net' + s_url
         s_content = urllib2.urlopen(s_url)
-        s_file = open('%s/%s' % (title, slide_name), 'wb')
-        s_file.write(s_content.read())
-        s_file.close()
+
+        with open('%s/%s' % (title, slide_name), 'wb') as f:
+            f.write(s_content.read())
 
     slides = {}
     for m in re.findall(r'idx:\s*(\d+), src:\s*"(.*?)"', html):
@@ -75,29 +75,25 @@ def videolecture_download():
         if m[1] in slides:
             slides_time[int(m[0])] = slides[m[1]]
 
-    f = open(title + '/sync.txt', 'w')
+    with open(title + '/sync.txt', 'w') as f:
+        f.write('%s\n' % video_name)
 
-    f.write('%s\n' % video_name)
+        idx = 0
+        for t in sorted(slides_time.keys()):
+            img_url = slides_time[t]
+            img_ext = img_url.split('.')[-1]
+            img = urllib2.urlopen(img_url)
+            img_name = '%03d.%s' % (idx, img_ext)
 
-    idx = 0
-    for t in sorted(slides_time.keys()):
-        img_url = slides_time[t]
-        img_ext = img_url.split('.')[-1]
-        img = urllib2.urlopen(img_url)
-        img_name = '%03d.%s' % (idx, img_ext)
-        img_file = open('%s/%s' % (title, img_name), 'wb')
-        img_file.write(img.read())
-        img_file.close()
+            with open('%s/%s' % (title, img_name), 'wb') as img_file:
+                img_file.write(img.read())
 
-        f.write('%s %s\n' % (t, img_name))
-        idx += 1
+            f.write('%s %s\n' % (t, img_name))
+            idx += 1
 
-    f.close()
-
-    f = open(title + '/info.txt', 'w')
-    f.write('%s\n' % url)
-    f.write('%s\n' % slide_name)
-    f.close()
+    with open(title + '/info.txt', 'w') as f:
+        f.write('%s\n' % url)
+        f.write('%s\n' % slide_name)
 
     if args.skip_video:
         sys.exit(0)
