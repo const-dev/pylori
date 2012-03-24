@@ -204,7 +204,6 @@ def pdf2png():
     n_pages, pdf_w, pdf_h = pdf_info(pdf_file)
 
     density = DEFAULT_DENSITY * args.width / pdf_w
-    print density
 
     convert_argv = ['convert', '-density', str(density), 
                     pdf_file, '%s/s.png' % tmp_dir]
