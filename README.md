@@ -49,7 +49,7 @@ on a separate window.
 `DIRECTORY` is the directory created by pylori\_dl that contains
 lecture materials.
 
-    pdf2png [-d DENSITY] [-m] DIRECTORY [PAGES [PAGES ...]]
+    pdf2png [-w WIDTH] [-m] DIRECTORY [PAGES [PAGES ...]]
 
 pdf2png will find PDF slides in `DIRECTORY`, the directory created by 
 pylori\_dl, and convert it to high resolution PNG images.
@@ -62,7 +62,7 @@ in the format `a-b` without spaces in between.  For example,
 `1-3` and `3-1` are equivalent to `1 2 3` and `3 2 1` respectively.
 If `PAGES` is omitted, all pages of PDF are generated.
 
-`DENSITY` is the density of images to generate.
+`WIDTH` is the width of outputing images, which defaults to 840.
 
 When `-m` or `--match` is specified, original low resolution images are
 automatically matched with PDF pages. `PAGES` are ignored when this option
@@ -105,15 +105,11 @@ pages in PDF slides. To generate the slide images for that particular
 section, you can specify the corresponding page numbers (or ranges) manually. 
 For the same example, it is:
 
-    $ pdf2png -d 300 Bayesian\ inference\ and\ Gaussian\ processes-4/ 38-43 42-44 42 41 44 41 44 43
-
-Without using `-d 300` the generated images will be
-not much better than the original ones, so a larger density should be 
-specified explicitly.
+    $ pdf2png Bayesian\ inference\ and\ Gaussian\ processes-4/ 38-43 42-44 42 41 44 41 44 43
 
 pdf2png also provides an auto matching option `-m` to take care of everything:
 
-    $ pdf2png -m -d 300 Bayesian\ inference\ and\ Gaussian\ processes-4/
+    $ pdf2png -m Bayesian\ inference\ and\ Gaussian\ processes-4/
 
 When `-m` is used, pdf2png will output the matched page numbers so you can
 use them in the future to save time.
