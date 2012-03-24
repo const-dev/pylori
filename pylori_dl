@@ -7,6 +7,7 @@ import subprocess
 import sys
 import urllib2
 
+# TODO: parse slides titles
 # make sure mplayer is in the path
 
 def videolecture_download():
@@ -66,7 +67,7 @@ def videolecture_download():
         s_file.close()
 
     slides = {}
-    for m in re.findall(r'idx: (\d+), src: "(.*?)"', html):
+    for m in re.findall(r'idx:\s*(\d+), src:\s*"(.*?)"', html):
         img_url = m[1]
         img_idx = int(m[0])
         img_ext = img_url.split('.')[-1]
@@ -80,7 +81,8 @@ def videolecture_download():
     
     slides_time = {}
     for m in re.findall('sync=sync.next={time: (\d+).*idx: (\d+)', html):
-        slides_time[int(m[0])] = slides[m[1]]
+        if m[1] in slides:
+            slides_time[int(m[0])] = slides[m[1]]
 
     f = open(title + '/sync.txt', 'w')
     f.write('%s\n' % video_name)
