@@ -95,7 +95,7 @@ you can use pdf2png to generate a higher resolution copy from PDF slides:
 
 pylori can also be used for lectures with multiple sections such as [this one]
 (http://videolectures.net/mlss07_rasmussen_bigp/).
-In this example, if you want to download, say the fourth part, you can specify
+In this example, if you want to download, say, the fourth part, you can specify
 the URL like the following format:
 
     $ pylori_dl http://videolectures.net/mlss07_rasmussen_bigp/video/4/

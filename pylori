@@ -65,6 +65,7 @@ class SlidesWindow(wx.Window):
 
     
     def show_slide(self, dc):
+        dc.Clear()
         dw, dh = dc.GetSize()
 
         iw, ih = self.img.GetWidth(), self.img.GetHeight()
