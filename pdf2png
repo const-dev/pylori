@@ -163,9 +163,9 @@ def pdf2png():
         print '%s: No such directory' % lec_dir
         sys.exit(1)
 
-    f = open('%s/info.txt' % lec_dir, 'r')
-    url = f.readline()
-    pdf_name = f.readline().rstrip()
+    with open('%s/info.txt' % lec_dir, 'r') as f:
+        url = f.readline()
+        pdf_name = f.readline().rstrip()
 
     if pdf_name == '-':
         print 'No pdf found.'
