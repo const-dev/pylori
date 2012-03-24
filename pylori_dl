@@ -7,9 +7,6 @@ import subprocess
 import sys
 import urllib2
 
-# assume slides indices on html follow strict order(0, 1, 2, ...) 
-# otherwise, should rename them explicitly.
-#
 # TODO: parse slides titles
 # make sure mplayer is in the path
 
@@ -71,16 +68,7 @@ def videolecture_download():
 
     slides = {}
     for m in re.findall(r'idx:\s*(\d+), src:\s*"(.*?)"', html):
-        img_url = m[1]
-        img_idx = int(m[0])
-        img_ext = img_url.split('.')[-1]
-        img = urllib2.urlopen(img_url)
-        img_name = '%03d.%s' % (img_idx, img_ext)
-        img_file = open('%s/%s' % (title, img_name), 'wb')
-        img_file.write(img.read())
-        img_file.close()
-
-        slides[m[0]] = img_name
+        slides[m[0]] = m[1]
     
     slides_time = {}
     for m in re.findall('sync=sync.next={time: (\d+).*idx: (\d+)', html):
@@ -88,9 +76,22 @@ def videolecture_download():
             slides_time[int(m[0])] = slides[m[1]]
 
     f = open(title + '/sync.txt', 'w')
+
     f.write('%s\n' % video_name)
+
+    idx = 0
     for t in sorted(slides_time.keys()):
-        f.write('%s %s\n' % (t, slides_time[t]))
+        img_url = slides_time[t]
+        img_ext = img_url.split('.')[-1]
+        img = urllib2.urlopen(img_url)
+        img_name = '%03d.%s' % (idx, img_ext)
+        img_file = open('%s/%s' % (title, img_name), 'wb')
+        img_file.write(img.read())
+        img_file.close()
+
+        f.write('%s %s\n' % (t, img_name))
+        idx += 1
+
     f.close()
 
     f = open(title + '/info.txt', 'w')
