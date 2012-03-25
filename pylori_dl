@@ -66,21 +66,22 @@ def videolecture_download():
         with open('%s/%s' % (title, slide_name), 'wb') as f:
             f.write(s_content.read())
 
-    slides = {}
-    for m in re.findall(r'idx:\s*(\d+), src:\s*"(.*?)"', html):
-        slides[m[0]] = m[1]
-    
-    slides_time = {}
-    for m in re.findall('sync=sync.next={time: (\d+).*idx: (\d+)', html):
-        if m[1] in slides:
-            slides_time[int(m[0])] = slides[m[1]]
+    id_url = {}
+    for m in re.findall(r'id: (\d+), idx: \d+, src: "(.*?)"', html):
+        id_url[m[0]] = m[1]
+
+    time_url = {}
+    for m in re.findall(
+            r'sync=sync.next={time: (\d+), slide: slides\[(\d+)\]', html):
+        if m[1] in id_url:
+            time_url[int(m[0])] = id_url[m[1]]
 
     with open(title + '/sync.txt', 'w') as f:
         f.write('%s\n' % video_name)
 
         idx = 0
-        for t in sorted(slides_time.keys()):
-            img_url = slides_time[t]
+        for t in sorted(time_url.keys()):
+            img_url = time_url[t]
             img_ext = img_url.split('.')[-1]
             img = urllib2.urlopen(img_url)
             img_name = '%03d.%s' % (idx, img_ext)
