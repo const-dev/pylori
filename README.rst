@@ -4,10 +4,10 @@ PYLORI: PYthon videoLecture Offline RevIew
 Pylori comes with a set of command-line tools to enjoy
 `videolectures.net <http://videolectures.net>`_ when disconnected:
 
--  **pylori\_dl** - To download video and slides from videolectures.net.
--  **pylori** - To play the video and slides downloaded by pylori\_dl.
--  **pdf2png** - To convert PDF slides downloaded by pylori\_dl to high
-   resolution images for pylori.
+-  **pylori\_dl** - to download video and slides from videolectures.net
+-  **pylori** - to play the video and slides downloaded by pylori\_dl
+-  **pdf2png** - to convert PDF slides downloaded by pylori\_dl to high
+   resolution images for pylori
 
 Installation
 ------------

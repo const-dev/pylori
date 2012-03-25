@@ -22,6 +22,12 @@ import re
 # So I use event instead..
 MSG_PASS_BY_EVENT = True
 
+# for widescreen, in case of failure to detect video aspect
+DEFAULT_VIDEO_ASPECT = 1.76   
+
+SET_MPLAYER_ASPECT = False
+
+
 class SlidesWindow(wx.Window):
     def __init__(self, parent):
         wx.Window.__init__(self, parent)
@@ -165,6 +171,20 @@ def cur_slide(msec, slides_sync, offset=3000):
     return slide
 
 
+def get_video_aspect(video):
+    args = ['mplayer', '-vo', 'null', '-ao', 'null', '-frames', '0',
+            '-identify', video]
+    p = subprocess.Popen(args, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE).communicate()
+
+    aspect = DEFAULT_VIDEO_ASPECT
+    m = re.search(r'ID_VIDEO_ASPECT=([\d.]+)', p[0])
+    if m:
+        aspect = float(m.group(1))
+
+    return aspect
+
+
 class SyncSlides(threading.Thread):
     def __init__(self, slides_viewer, disp_w, disp_h):
         threading.Thread.__init__(self)
@@ -176,12 +196,21 @@ class SyncSlides(threading.Thread):
     def run(self):
         video, slides_sync = load_lecture()
 
-        geo_x = int(self.disp_w) / 2
-        geo_y = int(self.disp_h)
+        video_file = '%s/%s' % (slides_dir, video)
+
+        video_aspect = get_video_aspect(video_file)
+
+        geo_w = int(self.disp_w) // 2
+
+        if sys.platform == 'darwin' and not SET_MPLAYER_ASPECT:
+            geo_h = int(self.disp_h)
+            geo_y = 0
+        else:
+            geo_h = int(round(geo_w / video_aspect))
+            geo_y = (self.disp_h - geo_h) // 2
 
         args = ['mplayer', '-af', 'scaletempo', #'-ontop',
-                '-geometry', '%dx%d+0+0' % (geo_x, geo_y),
-                '%s/%s' % (slides_dir, video)]
+                '-geometry', '%dx%d+0+%d' % (geo_w, geo_h, geo_y), video_file]
 
         #print ' '.join(args)
 
