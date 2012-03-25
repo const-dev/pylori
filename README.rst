@@ -74,8 +74,8 @@ pdf2png will also make pylori to display new images afterward.
 Examples
 --------
 
-Supposing you are interested in `this lecture
-<http://videolectures.net/nipsworkshops2011\_ghahramani\_nonparametrics/>`_,
+Supposing you are interested in 
+`this lecture <http://videolectures.net/nipsworkshops2011_ghahramani_nonparametrics/>`_,
 you can run the following to download the materials of that lecture::
 
     $ pylori_dl http://videolectures.net/nipsworkshops2011_ghahramani_nonparametrics/
@@ -94,9 +94,9 @@ to generate a higher resolution copy from PDF slides::
     $ pdf2png Why\ Bayesian\ nonparametrics\?/
 
 pylori can also be used for lectures with multiple sections such as
-`this one <http://videolectures.net/mlss07\_rasmussen\_bigp/>`_. In this
-example, if you want to download, say, the fourth part, you can specify
-the URL like the following format::
+`this one <http://videolectures.net/mlss07_rasmussen_bigp/>`_. 
+In this example, if you want to download, say, the fourth part, you can 
+specify the URL like the following format::
 
     $ pylori_dl http://videolectures.net/mlss07_rasmussen_bigp/video/4/
 
