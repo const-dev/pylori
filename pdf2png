@@ -13,7 +13,7 @@ import fileinput
 
 
 CMP_IMG_WIDTH = 200
-MSER_THRESHOLD = 10000
+RMSE_THRESHOLD = 10000
 
 DEFAULT_IMG_WIDTH = 840   # good for 15-inch laptop
 DEFAULT_DENSITY = 72
@@ -44,6 +44,13 @@ def img_resize(img, w, img_out):
 
 # NOTE: stdout is redirected (fileinput.input: inplace=1) in img_compare
 def img_compare(img1, img2):
+
+    w1, h1 = img_get_size(img1)
+    w2, h2 = img_get_size(img2)
+    if h1 < h2:   # assert w1 == w2
+        img1, img2 = img2, img1
+
+    # size of img1 must be larger than or equal to size of img2
     args = ['compare', '-metric', 'RMSE', '-subimage-search', img1, img2,
             'sim.png']
     p = subprocess.Popen(args, stdout=subprocess.PIPE,
@@ -81,7 +88,7 @@ def match_img(tmp_dir, lec_dir, n_pages):
 
         min_diff = min(diffs)
         
-        if min_diff > MSER_THRESHOLD:
+        if min_diff > RMSE_THRESHOLD:
             sys.stderr.write('NOTE: %s might not match any page of the PDF.\n'\
                              % orig_img)
 
