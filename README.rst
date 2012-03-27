@@ -16,17 +16,18 @@ Pylori requires
 `Python <http://www.python.org/>`_,
 `wxPython <http://www.wxpython.org/>`_,
 `MPlayer <http://www.mplayerhq.hu/>`_,
-`ImageMagick <http://www.imagemagick.org/>`_.
+`ImageMagick <http://www.imagemagick.org/>`_,
+and `Ghostscript <http://pages.cs.wisc.edu/~ghost/>`_.
 
 On Mac OS X, you could install the above packages through
 `MacPorts <http://www.macports.org/>`_::
 
-    $ sudo port install python27 py27-wxpython-devel mplayer-devel ImageMagick
+    $ sudo port install python27 py27-wxpython-devel mplayer-devel ImageMagick ghostscript
 
 On Linux, you could install required packages with package management
 tools on your system. For example, on Ubuntu::
 
-    $ sudo apt-get install python python-wxgtk2.8 mplayer imagemagick
+    $ sudo apt-get install python python-wxgtk2.8 mplayer imagemagick ghostscript
 
 Usage
 -----
