@@ -19,7 +19,7 @@ COMPARE = 'compare'
 GHOSTSCRIPT = 'gs'
 
 
-CMP_IMG_WIDTH = 200
+CMP_IMG_WIDTH = 150
 RMSE_THRESHOLD = 10000
 
 DEFAULT_IMG_WIDTH = 840   # good for 15-inch laptop
@@ -53,21 +53,13 @@ def img_get_size(img):
     return map(int, p[0].split())
 
 
-def img_resize(img, w, img_out):
-    subprocess.call([CONVERT, img, '-resize', str(w), img_out])
+def img_resize(img, w, h, img_out):
+    subprocess.call([CONVERT, img, '-resize', '%dx%d' % (w, h), img_out])
 
 
 # NOTE: stdout is redirected (fileinput.input: inplace=1) in img_compare
 def img_compare(img1, img2):
-
-    w1, h1 = img_get_size(img1)
-    w2, h2 = img_get_size(img2)
-    if h1 < h2:   # assert w1 == w2
-        img1, img2 = img2, img1
-
-    # size of img1 must be larger than or equal to size of img2
-    argv = [COMPARE, '-metric', 'RMSE', '-subimage-search', img1, img2,
-            'sim.png']
+    argv = [COMPARE, '-metric', 'RMSE', img1, img2, 'sim.png']
     p = subprocess.Popen(argv, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE).communicate()
 
@@ -79,10 +71,13 @@ def img_compare(img1, img2):
 
 def match_img(tmp_dir, lec_dir, n_pages):
     # use the first image as reference
-    img_w, img_h = img_get_size('%s/s-1.png' % tmp_dir)
+    img_w, img_h = img_get_size('%s/s-0.png' % tmp_dir)
+
+    cmp_w = CMP_IMG_WIDTH
+    cmp_h = round(CMP_IMG_WIDTH * img_h / img_w)
 
     for i in range(n_pages):
-        img_resize('%s/s-%d.png' % (tmp_dir, i + 1), CMP_IMG_WIDTH, 
+        img_resize('%s/s-%d.png' % (tmp_dir, i), cmp_w, cmp_h,
                 '%s/r-%d.png' % (tmp_dir, i))
 
     match = []
@@ -97,7 +92,7 @@ def match_img(tmp_dir, lec_dir, n_pages):
         orig_name = line.split()[1]
         orig_img = '%s/%s' % (lec_dir, orig_name)
         cmp_name = '%s/cmp.png' % tmp_dir
-        img_resize(orig_img, CMP_IMG_WIDTH, cmp_name)
+        img_resize(orig_img, cmp_w, cmp_h, cmp_name)
 
         diffs = [img_compare(cmp_name, '%s/r-%d.png' % (tmp_dir, i)) 
                 for i in range(n_pages)]
@@ -111,7 +106,7 @@ def match_img(tmp_dir, lec_dir, n_pages):
         match_idx = diffs.index(min_diff)
         new_name = orig_name[:orig_name.rindex('.')] + '.png'
 
-        shutil.copy('%s/s-%d.png' % (tmp_dir, match_idx + 1), 
+        shutil.copy('%s/s-%d.png' % (tmp_dir, match_idx), 
                     '%s/%s' % (lec_dir, new_name))
 
         match.append(str(match_idx + 1))
@@ -135,7 +130,7 @@ def copy_img(tmp_dir, lec_dir, pages, n_pages):
 
     idx = 0
     for p in pages:
-        shutil.copy('%s/s-%d.png' % (tmp_dir, p + 1),
+        shutil.copy('%s/s-%d.png' % (tmp_dir, p),
                     '%s/%03d.png' % (lec_dir, idx))
         idx += 1
 
@@ -230,11 +225,8 @@ def pdf2png():
 
     density = DEFAULT_DENSITY * args.width / pdf_w
 
-    # NOTE: ghostscript numbers images from one!
-    argv = [GHOSTSCRIPT, '-dBATCH', '-dNOPAUSE', '-sDEVICE=png16m',
-            '-dSAFER', '-dTextAlphaBits=4', '-dGraphicsAlphaBits=4', 
-            '-r%s' % str(density),
-            '-sOutputFile=%s/s-%%d.png' % tmp_dir, pdf_file]
+    argv = ['convert', '-density', str(density), pdf_file, 
+            '%s/s.png' % tmp_dir]
 
     subprocess.Popen(argv, stdout=subprocess.PIPE, 
             stderr=subprocess.PIPE).communicate()
