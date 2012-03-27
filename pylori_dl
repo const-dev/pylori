@@ -10,6 +10,10 @@ import urllib2
 # TODO: parse slides titles
 # make sure mplayer is in the path
 
+
+MPLAYER = 'mplayer'
+
+
 def videolecture_download():
     parser = argparse.ArgumentParser(
             description='Download lectures from videolectures.net')
@@ -100,7 +104,7 @@ def videolecture_download():
         sys.exit(0)
 
     video_file = '%s/%s' % (title, video_name)
-    argv = ['mplayer', '-dumpstream', mms, '-dumpfile', video_file]
+    argv = [MPLAYER, '-dumpstream', mms, '-dumpfile', video_file]
     ret = subprocess.call(argv)
 
     if ret == 0:

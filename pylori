@@ -14,8 +14,9 @@ import re
 #  * more error handling (eg: invalid sync.txt format)
 #
 # FIXME: figure out how to handle close event
-#
-# assume mplayer is in the path
+
+
+MPLAYER = 'mplayer'
 
 # How come the following messges keep showing when using wx.lib.pubsub?
 # "__NSCFString autoreleased with no pool in place - just leaking"
@@ -172,7 +173,7 @@ def cur_slide(msec, slides_sync, offset=3000):
 
 
 def get_video_aspect(video):
-    args = ['mplayer', '-vo', 'null', '-ao', 'null', '-frames', '0',
+    args = [MPLAYER, '-vo', 'null', '-ao', 'null', '-frames', '0',
             '-identify', video]
     p = subprocess.Popen(args, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE).communicate()
@@ -209,7 +210,7 @@ class SyncSlides(threading.Thread):
             geo_h = int(round(geo_w / video_aspect))
             geo_y = (self.disp_h - geo_h) // 2
 
-        args = ['mplayer', '-af', 'scaletempo', #'-ontop',
+        args = [MPLAYER, '-af', 'scaletempo', #'-ontop',
                 '-geometry', '%dx%d+0+%d' % (geo_w, geo_h, geo_y), video_file]
 
         #print ' '.join(args)

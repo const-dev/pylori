@@ -11,6 +11,13 @@ import glob
 import re
 import fileinput
 
+# ImageMagick command-line tools
+CONVERT = 'convert'
+IDENTIFY = 'identify'
+COMPARE = 'compare'
+
+GHOSTSCRIPT = 'gs'
+
 
 CMP_IMG_WIDTH = 200
 RMSE_THRESHOLD = 10000
@@ -19,27 +26,35 @@ DEFAULT_IMG_WIDTH = 840   # good for 15-inch laptop
 DEFAULT_DENSITY = 72
 
 
-def pdf_info(pdf):
-    args = ['identify', '-format', '%w %h ', pdf]
-    p = subprocess.Popen(args, stdout=subprocess.PIPE,
+def pdf_info(pdf, tmp_dir):
+    argv = ['gs', '-q', '-dNODISPLAY', '-c', 
+            '(%s) (r) file runpdfbegin pdfpagecount = quit' % pdf]
+    p = subprocess.Popen(argv, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE).communicate()
+    n_pages = int(p[0])
+
+    # generate a single image using default density for reference
+    tmp_img = '%s/tmp.png' % tmp_dir
+    argv = ['gs', '-dSAFER', '-dBATCH', '-dNOPAUSE', 
+            '-dFirstPage=1', '-dLastPage=1', '-sDEVICE=png16m', 
+            '-sOutputFile=%s' % tmp_img, pdf]
+    p = subprocess.Popen(argv, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE).communicate()
 
-    n_wh = p[0].split()
-    n_pages = len(n_wh) // 2
-    w, h = map(int, n_wh[:2])
+    w, h = img_get_size(tmp_img)
 
     return n_pages, w, h
 
 
 def img_get_size(img):
-    args = ['identify', '-format', '%w %h', img]
-    p = subprocess.Popen(args, stdout=subprocess.PIPE).communicate()
+    argv = [IDENTIFY, '-format', '%w %h', img]
+    p = subprocess.Popen(argv, stdout=subprocess.PIPE).communicate()
 
     return map(int, p[0].split())
 
 
 def img_resize(img, w, img_out):
-    subprocess.call(['convert', img, '-resize', str(w), img_out])
+    subprocess.call([CONVERT, img, '-resize', str(w), img_out])
 
 
 # NOTE: stdout is redirected (fileinput.input: inplace=1) in img_compare
@@ -51,9 +66,9 @@ def img_compare(img1, img2):
         img1, img2 = img2, img1
 
     # size of img1 must be larger than or equal to size of img2
-    args = ['compare', '-metric', 'RMSE', '-subimage-search', img1, img2,
+    argv = [COMPARE, '-metric', 'RMSE', '-subimage-search', img1, img2,
             'sim.png']
-    p = subprocess.Popen(args, stdout=subprocess.PIPE,
+    p = subprocess.Popen(argv, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE).communicate()
 
     if p[1].find('images too dissimilar') >= 0:
@@ -63,10 +78,11 @@ def img_compare(img1, img2):
 
 
 def match_img(tmp_dir, lec_dir, n_pages):
-    img_w, img_h = img_get_size('%s/s-0.png' % tmp_dir)
+    # use the first image as reference
+    img_w, img_h = img_get_size('%s/s-1.png' % tmp_dir)
 
     for i in range(n_pages):
-        img_resize('%s/s-%d.png' % (tmp_dir, i), CMP_IMG_WIDTH, 
+        img_resize('%s/s-%d.png' % (tmp_dir, i + 1), CMP_IMG_WIDTH, 
                 '%s/r-%d.png' % (tmp_dir, i))
 
     match = []
@@ -95,7 +111,7 @@ def match_img(tmp_dir, lec_dir, n_pages):
         match_idx = diffs.index(min_diff)
         new_name = orig_name[:orig_name.rindex('.')] + '.png'
 
-        shutil.copy('%s/s-%d.png' % (tmp_dir, match_idx), 
+        shutil.copy('%s/s-%d.png' % (tmp_dir, match_idx + 1), 
                     '%s/%s' % (lec_dir, new_name))
 
         match.append(str(match_idx + 1))
@@ -119,7 +135,7 @@ def copy_img(tmp_dir, lec_dir, pages, n_pages):
 
     idx = 0
     for p in pages:
-        shutil.copy('%s/s-%d.png' % (tmp_dir, p),
+        shutil.copy('%s/s-%d.png' % (tmp_dir, p + 1),
                     '%s/%03d.png' % (lec_dir, idx))
         idx += 1
 
@@ -210,14 +226,18 @@ def pdf2png():
 
     tmp_dir = tempfile.mkdtemp()
 
-    n_pages, pdf_w, pdf_h = pdf_info(pdf_file)
+    n_pages, pdf_w, pdf_h = pdf_info(pdf_file, tmp_dir)
 
     density = DEFAULT_DENSITY * args.width / pdf_w
 
-    convert_argv = ['convert', '-density', str(density), 
-                    pdf_file, '%s/s.png' % tmp_dir]
+    # NOTE: ghostscript numbers images from one!
+    argv = [GHOSTSCRIPT, '-dBATCH', '-dNOPAUSE', '-sDEVICE=png16m',
+            '-dSAFER', '-dTextAlphaBits=4', '-dGraphicsAlphaBits=4', 
+            '-r%s' % str(density),
+            '-sOutputFile=%s/s-%%d.png' % tmp_dir, pdf_file]
 
-    subprocess.Popen(convert_argv, stderr=subprocess.PIPE).communicate()
+    subprocess.Popen(argv, stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE).communicate()
 
     if args.auto_match:
         match_img(tmp_dir, lec_dir, n_pages)
