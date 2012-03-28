@@ -58,8 +58,8 @@ def img_resize(img, w, h, img_out):
 
 
 # NOTE: stdout is redirected (fileinput.input: inplace=1) in img_compare
-def img_compare(img1, img2):
-    argv = [COMPARE, '-metric', 'RMSE', img1, img2, 'sim.png']
+def img_compare(img1, img2, sim_img):
+    argv = [COMPARE, '-metric', 'RMSE', img1, img2, sim_img]
     p = subprocess.Popen(argv, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE).communicate()
 
@@ -94,8 +94,8 @@ def match_img(tmp_dir, lec_dir, n_pages):
         cmp_name = '%s/cmp.png' % tmp_dir
         img_resize(orig_img, cmp_w, cmp_h, cmp_name)
 
-        diffs = [img_compare(cmp_name, '%s/r-%d.png' % (tmp_dir, i)) 
-                for i in range(n_pages)]
+        diffs = [img_compare(cmp_name, '%s/r-%d.png' % (tmp_dir, i), 
+                             '%s/sim.png' % tmp_dir) for i in range(n_pages)]
 
         min_diff = min(diffs)
         
