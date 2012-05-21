@@ -20,7 +20,7 @@ GHOSTSCRIPT = 'gs'
 
 
 CMP_IMG_WIDTH = 150
-RMSE_THRESHOLD = 10000
+RMSE_THRESHOLD = 5000
 
 DEFAULT_IMG_WIDTH = 840   # good for 15-inch laptop
 DEFAULT_DENSITY = 72
@@ -74,7 +74,7 @@ def match_img(tmp_dir, lec_dir, n_pages):
     img_w, img_h = img_get_size('%s/s-0.png' % tmp_dir)
 
     cmp_w = CMP_IMG_WIDTH
-    cmp_h = round(CMP_IMG_WIDTH * img_h / img_w)
+    cmp_h = int(round(CMP_IMG_WIDTH * img_h / img_w))
 
     for i in range(n_pages):
         img_resize('%s/s-%d.png' % (tmp_dir, i), cmp_w, cmp_h,
@@ -82,6 +82,8 @@ def match_img(tmp_dir, lec_dir, n_pages):
 
     match = []
     first = True
+
+    shutil.copy('%s/sync.txt' % lec_dir, '%s/sync.txt~' % lec_dir)
 
     for line in fileinput.input('%s/sync.txt' % lec_dir, inplace=1):
         if first:
