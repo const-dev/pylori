@@ -63,6 +63,18 @@ def img_compare(img1, img2, sim_img):
     p = subprocess.Popen(argv, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE).communicate()
 
+    if p[1].find('image widths or heights differ') >= 0:
+        w1, h1 = img_get_size(img1)
+        w2, h2 = img_get_size(img2)
+
+        if w1 < w2 or h1 < h2:
+            img1, img2 = img2, img1
+
+        argv = [COMPARE, '-metric', 'RMSE', '-subimage-search',
+                img1, img2, sim_img]
+        p = subprocess.Popen(argv, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE).communicate()
+
     if p[1].find('images too dissimilar') >= 0:
         return 1e12
 
