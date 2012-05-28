@@ -54,7 +54,8 @@ def img_get_size(img):
 
 
 def img_resize(img, w, h, img_out):
-    subprocess.call([CONVERT, img, '-resize', '%dx%d' % (w, h), img_out])
+    subprocess.call([CONVERT, img, '-resize', '%dx%d' % (w, h),
+                     '-background', 'white', '-flatten', img_out])
 
 
 # NOTE: stdout is redirected (fileinput.input: inplace=1) in img_compare
