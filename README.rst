@@ -6,7 +6,7 @@ Pylori comes with a set of command-line tools to enjoy
 
 -  **pylori\_dl** - to download video and slides from videolectures.net
 -  **pylori** - to play the video and slides downloaded by pylori\_dl
--  **pdf2png** - to convert PDF slides downloaded by pylori\_dl to high
+-  **hdslides** - to convert PDF slides downloaded by pylori\_dl to high
    resolution images for pylori
 
 Installation
@@ -51,9 +51,9 @@ pylori\_dl that contains lecture materials.
 
 ::
 
-    pdf2png [-w WIDTH] [-m] DIRECTORY [PAGES [PAGES ...]]
+    hdslides [-w WIDTH] [-m] DIRECTORY [PAGES [PAGES ...]]
 
-pdf2png will find PDF slides in ``DIRECTORY``, the directory created by
+hdslides will find PDF slides in ``DIRECTORY``, the directory created by
 pylori\_dl, and convert it to high resolution PNG images. The generated
 images are put into ``DIRECTORY``.
 
@@ -70,7 +70,7 @@ When ``-m`` or ``--match`` is specified, original low resolution images
 are automatically matched with PDF pages. ``PAGES`` are ignored when
 this option is used.
 
-pdf2png will also make pylori to display new images afterward.
+hdslides will also make pylori to display new images afterward.
 
 Examples
 --------
@@ -89,10 +89,10 @@ You can then watch the lecture by::
 
 When a PDF version of the slides is available, pylori\_dl will download
 and place it in the created directory as well. If you are not satisfy
-with the quality of the original slides snapshots, you can use pdf2png
+with the quality of the original slides snapshots, you can use hdslides
 to generate a higher resolution copy from PDF slides::
 
-    $ pdf2png Why\ Bayesian\ nonparametrics\?/
+    $ hdslides Why\ Bayesian\ nonparametrics\?/
 
 pylori can also be used for lectures with multiple sections such as
 `this one <http://videolectures.net/mlss07_rasmussen_bigp/>`_. 
@@ -106,12 +106,12 @@ pages in PDF slides. To generate the slide images for that particular
 section, you can specify the corresponding page numbers (or ranges)
 manually. For the same example, it is::
 
-    $ pdf2png Bayesian\ inference\ and\ Gaussian\ processes-4/ 38-43 42-44 42 41 44 41 44 43
+    $ hdslides Bayesian\ inference\ and\ Gaussian\ processes-4/ 38-43 42-44 42 41 44 41 44 43
 
-pdf2png also provides an auto matching option ``-m`` to take care of
+hdslides also provides an auto matching option ``-m`` to take care of
 everything::
 
-    $ pdf2png -m Bayesian\ inference\ and\ Gaussian\ processes-4/
+    $ hdslides -m Bayesian\ inference\ and\ Gaussian\ processes-4/
 
-When ``-m`` is used, pdf2png will output the matched page numbers so you
+When ``-m`` is used, hdslides will output the matched page numbers so you
 can use them in the future to save time.
