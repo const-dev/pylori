@@ -30,13 +30,15 @@ def videolecture_download():
 
     html = urllib2.urlopen(url).read()
 
-    match = re.search(r'"(mms://.*?)"', html)
-    if match:
-        mms = match.group(1)
-    else:
-        raise Exception("Parsing error: failed to find mms")
+    m1 = re.search(r'clip.netConnectionUrl = "(.*?)";', html)
+    m2 = re.search(r'clip.url = "(.*?)";', html)
 
-    #print 'Media URL: %s' % mms
+    if m1 and m2:
+        video_url = m1.group(1) + '/' + m2.group(1)
+    else:
+        raise Exception("Failed to find video URL")
+
+    print 'video URL: %s' % video_url
 
     m = re.search(r'<meta name="title" content="(.*?)" />', html)
     title = m.group(1).rstrip()
@@ -104,7 +106,7 @@ def videolecture_download():
         sys.exit(0)
 
     video_file = '%s/%s' % (title, video_name)
-    argv = [MPLAYER, '-dumpstream', mms, '-dumpfile', video_file]
+    argv = [MPLAYER, '-dumpstream', video_url, '-dumpfile', video_file]
     ret = subprocess.call(argv)
 
     if ret == 0:
