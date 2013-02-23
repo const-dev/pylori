@@ -2,14 +2,14 @@
 
 from __future__ import division
 import wx
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import pub
 import sys
 import os
 import threading
 import subprocess
 import re
 
-# TODO: 
+# TODO:
 #  * redirect keyboard event on wx to mplayer (popen)
 #  * more error handling (eg: invalid sync.txt format)
 #
@@ -24,7 +24,7 @@ MPLAYER = 'mplayer'
 MSG_PASS_BY_EVENT = True
 
 # for widescreen, in case of failure to detect video aspect
-DEFAULT_VIDEO_ASPECT = 1.76   
+DEFAULT_VIDEO_ASPECT = 1.76
 
 SET_MPLAYER_ASPECT = False
 
@@ -45,12 +45,12 @@ class SlidesWindow(wx.Window):
 
 
     def init_buffer(self):
-        w, h = self.GetClientSize()        
+        w, h = self.GetClientSize()
 
         self.buffer = wx.EmptyBitmap(w, h)
         dc = wx.BufferedDC(wx.ClientDC(self), self.buffer)
         self.show_slide(dc)
-        
+
 
     def set_slide(self, img_file):
         self.img = wx.Image(img_file, wx.BITMAP_TYPE_ANY)
@@ -70,7 +70,7 @@ class SlidesWindow(wx.Window):
         self.parent.SetSize(wx.Size(win_w, win_h))
         self.init_buffer()
 
-    
+
     def show_slide(self, dc):
         dc.Clear()
         dw, dh = dc.GetSize()
@@ -79,7 +79,7 @@ class SlidesWindow(wx.Window):
         self.ratio = iw / ih
 
         scale = min(dw / iw, dh / ih)
-        scaled_img = self.img.Scale(scale * iw, scale * ih, 
+        scaled_img = self.img.Scale(scale * iw, scale * ih,
                 wx.IMAGE_QUALITY_HIGH)
         dc.DrawBitmap(wx.BitmapFromImage(scaled_img), 0, 0)
 
@@ -89,7 +89,7 @@ class SlidesWindow(wx.Window):
 
         img = wx.Image(img_file, wx.BITMAP_TYPE_ANY)
         img_w, img_h = img.GetWidth(), img.GetHeight()
-        # place two windows side by side horizontally 
+        # place two windows side by side horizontally
         scale = min(disp_w / 2 / img_w, disp_h / img_h)
 
         img_w *= scale
@@ -104,7 +104,7 @@ class SlidesWindow(wx.Window):
         self.ratio = img_w / img_h
         self.img = img
         self.resize((img_w, img_h))
-        
+
         self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
@@ -130,7 +130,7 @@ class InitGeoEvent(wx.PyEvent):
 
 class SlidesFrame(wx.Frame):
     def __init__(self):
-        wx.Frame.__init__(self, None, 
+        wx.Frame.__init__(self, None,
                 style=(wx.DEFAULT_FRAME_STYLE | wx.STAY_ON_TOP))
         self.plot = SlidesWindow(self)
 
@@ -189,7 +189,7 @@ def get_video_aspect(video):
 class SyncSlides(threading.Thread):
     def __init__(self, slides_viewer, disp_w, disp_h):
         threading.Thread.__init__(self)
-        self.slides_viewer = slides_viewer 
+        self.slides_viewer = slides_viewer
         self.disp_w = disp_w
         self.disp_h = disp_h
         self.start()
@@ -216,7 +216,7 @@ class SyncSlides(threading.Thread):
         #print ' '.join(args)
 
         p = subprocess.Popen(args, stdin=None,
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, 
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 universal_newlines=True)
 
         prev_slide = slides_sync[0][1]
@@ -272,6 +272,7 @@ if __name__ == '__main__':
     frm = SlidesFrame()
 
     disp_w, disp_h = wx.GetDisplaySize()
-    SyncSlides(frm, disp_w, disp_h)
+    slide_thread = SyncSlides(frm, disp_w, disp_h)
 
     app.MainLoop()
+    slide_thread.join()
