@@ -1,3 +1,9 @@
+**NOTE** 
+
+``pylori_dl`` is currently out-of-date (as of Oct 22nd, 2013), 
+please use ``videolectures-videourl`` to extract the video URL instead.
+
+
 PYLORI: PYthon videoLecture Offline RevIew
 ==========================================
 
