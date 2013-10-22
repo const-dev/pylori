@@ -26,9 +26,9 @@ def extract_video(url):
 
 def main():
     parser = argparse.ArgumentParser(
-            description='Download lectures from videolectures.net')
+            description='Extract video URL from videolectures.net')
 
-    parser.add_argument('url', help='http://videolectures.net/XXX/[video/NNN/]')
+    parser.add_argument('url', help='http://videolectures.net/XXX')
 
     args = parser.parse_args()
     extract_video(args.url)
